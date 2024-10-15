@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Video Stream</title>
+</head>
+
+<body>
+    <video id="videoElement" controls autoplay></video>
+
+    <script>
+        const mimeCodec = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+        const ws = new WebSocket('ws://localhost:3000');
+        ws.binaryType = 'arraybuffer';
+
+
+        const video = document.getElementById('videoElement');
+
+
+        // Inicjalizacja Media Source Extensions (MSE)
+        const mediaSource = new MediaSource();
+        video.src = URL.createObjectURL(mediaSource);
+
+        mediaSource.addEventListener('sourceopen', () => {
+            const sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01E"');
+
+            ws.onmessage = (event) => {
+                // Dodajemy fragmenty wideo do bufora MSE
+                if (!sourceBuffer.updating) {
+                    sourceBuffer.appendBuffer(event.data);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed');
+                mediaSource.endOfStream();
+            };
+        });
+
+        mediaSource.addEventListener('error', (e) => {
+            console.error('MediaSource error:', e);
+        });
+    </script>
+</body>
+
+</html>
