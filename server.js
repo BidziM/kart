@@ -16,14 +16,22 @@ app.get('/', (req, res) => {
 // Function to start FFmpeg streaming
 function startFFmpegStream(socket) {
   const ffmpegProcess = spawn('ffmpeg', [
+    '-y',
+    '-threads', '4',
     '-f', 'dshow',      // Input format for Linux (adjust for Mac/Windows)
     '-i', 'video=USB Camera', 
     '-framerate', '30',        // Set the framerate to 30fps (or '15' if you prefer)
     '-s', '1280x720',          // Set the resolution to 1280x720 (or another supported resolution)
     '-c:v', 'libx264',         // Use H.264 codec for video encoding
     '-preset', 'ultrafast',     // Minimize encoding latency
+    '-movflags', 'frag_keyframe+empty_moov+cmaf',
+    '-fflags', 'nobuffer',
+    '-flags','low_delay' ,
+    //'-framedrop',
+    //'-rtpflags', 'latm',
     '-f', 'mp4',               // Use MP4 container format
-    '-movflags', 'frag_keyframe+empty_moov', // Necessary flags for streaming fragmented MP4
+    '-frag_duration', '50',
+    '-max_muxing_queue_size', '1024',
     '-b:v', '1000k',           // Bitrate
     '-'
   ]);
